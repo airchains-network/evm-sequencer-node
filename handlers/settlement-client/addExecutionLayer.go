@@ -37,7 +37,7 @@ func AddExecutionLayer() string {
 
 	verificationKeyContentsAsString := string(verificationKeyContents)
 
-	chainInfoFile, err := os.ReadFile("data/chainInfo.json")
+	chainInfoFile, err := os.ReadFile("config/chainInfo.json")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		logs.Log.Error("Error reading chainInfo.json file")
@@ -54,6 +54,10 @@ func AddExecutionLayer() string {
 	}
 
 	chainInfoAsString, err := json.Marshal(chainInfo.ChainInfo)
+	if err != nil {
+		fmt.Println("Error marshalling chain info:", err)
+		return "nil"
+	}
 
 	postAddExecutionLayerStruct := PostAddExecutionLayerStruct{
 		VerificationKey: verificationKeyContentsAsString,
