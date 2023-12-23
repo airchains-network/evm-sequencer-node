@@ -11,4 +11,5 @@ touch data/batchCount.txt
 echo "0" > data/blockCount.txt
 echo "0" > data/transactionCount.txt
 echo "0" > data/batchCount.txt
+
 go run main.go
