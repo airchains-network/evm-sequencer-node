@@ -4,6 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"sync"
+	"time"
+
 	air "github.com/airchains-network/evm-sequencer-node/airdb/air-leveldb"
 	"github.com/airchains-network/evm-sequencer-node/common"
 	"github.com/airchains-network/evm-sequencer-node/common/logs"
@@ -12,14 +17,24 @@ import (
 	"github.com/airchains-network/evm-sequencer-node/prover"
 	"github.com/airchains-network/evm-sequencer-node/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"log"
-	"os"
-	"sync"
-	"time"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	logs.Log.Info("Starting EVM Sequencer")
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	daClientRPC := os.Getenv("DA_CLIENT_RPC")
+
+	if daClientRPC == "" {
+		logs.Log.Error("Please set all the environment variables")
+		os.Exit(0)
+	}
+
 	ctx := context.Background()
 	dbStatus := air.InitDb()
 	if !dbStatus {
@@ -33,7 +48,7 @@ func main() {
 		logs.Log.Error("Something went wrong while adding execution layer")
 		logs.Log.Warn("Retrying in 5 seconds...")
 		time.Sleep(5 * time.Second)
-		chainId = settlement_client.AddExecutionLayer()
+		_ = settlement_client.AddExecutionLayer()
 	} else if chainId == "exist" {
 		logs.Log.Info("Chain already exist")
 	}
@@ -53,6 +68,10 @@ func main() {
 	}
 
 	daBytes, err := json.Marshal(da)
+	if err != nil {
+		logs.Log.Error(fmt.Sprintf("Error in marshalling da : %s", err.Error()))
+		os.Exit(0)
+	}
 
 	_, err = ldda.Get([]byte("batch_0"), nil)
 	if err != nil {
@@ -85,9 +104,6 @@ func main() {
 			os.Exit(0)
 		}
 	}
-
-	_ = ldbatch
-	_ = batchStartIndex
 
 	var wg sync.WaitGroup
 
