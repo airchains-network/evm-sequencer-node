@@ -4,14 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/airchains-network/evm-sequencer-node/common"
 	"github.com/airchains-network/evm-sequencer-node/common/logs"
 	"github.com/airchains-network/evm-sequencer-node/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/syndtr/goleveldb/leveldb"
-	"math/big"
-	"os"
-	"strconv"
 )
 
 func BlockSave(client *ethclient.Client, ctx context.Context, blockIndex int, ldb *leveldb.DB, ldt *leveldb.DB) {
@@ -19,6 +21,9 @@ func BlockSave(client *ethclient.Client, ctx context.Context, blockIndex int, ld
 	if err != nil {
 		errMessage := fmt.Sprintf("Failed to get block data for block number %d: %s", blockIndex, err)
 		logs.Log.Error(errMessage)
+		logs.Log.Info("Waiting for the next block..")
+		time.Sleep(common.BlockDelay * time.Second)
+		BlockSave(client, ctx, blockIndex, ldb, ldt)
 	}
 
 	block := types.BlockStruct{
